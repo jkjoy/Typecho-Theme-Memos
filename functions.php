@@ -23,37 +23,6 @@ function saveThemeConfig($config) {
     return $config;
 }
 
-/*
-* 文章浏览数统计
-*/
-function get_post_view($archive) {
-    $cid = $archive->cid;
-    $db = Typecho_Db::get();
-    $prefix = $db->getPrefix();
-    if (!array_key_exists('views', $db->fetchRow($db->select()->from('table.contents')))) {
-        $db->query('ALTER TABLE `' . $prefix . 'contents` ADD `views` INT(10) DEFAULT 0;');
-        echo 0;
-        return;
-    }
-    $row = $db->fetchRow($db->select('views')->from('table.contents')->where('cid = ?', $cid));
-    if ($archive->is('single')) {
-        $views = Typecho_Cookie::get('extend_contents_views');
-        if (empty($views)) {
-            $views = array();
-        } else {
-            $views = explode(',', $views);
-        }
-        if (!in_array($cid, $views)) {
-            $db->query($db->update('table.contents')->rows(array('views' => (int)$row['views'] + 1))->where('cid = ?', $cid));
-            array_push($views, $cid);
-            $views = implode(',', $views);
-            Typecho_Cookie::set('extend_contents_views', $views); //记录查看cookie
-            
-        }
-    }
-    echo $row['views'];
-}
-
 /** 头像镜像     */
 $options = Typecho_Widget::widget('Widget_Options');
 $gravatarPrefix = empty($options->cnavatar) ? 'https://cravatar.cn/avatar/' : $options->cnavatar;
@@ -187,9 +156,9 @@ function time_ago($timestamp) {
 }
 
 /**
- * 豆瓣api
+ * 豆瓣卡片渲染
+ * 
  */
-// 豆瓣卡片渲染
 function renderDoubanCards($content) {
     $pattern = '/<a[^>]+href=["\'](https?:\/\/(movie|book)\.douban\.com\/subject\/(\d+)\/?)["\'][^>]*>(.*?)<\/a>/i';
     return preg_replace_callback($pattern, function($matches) {
@@ -197,10 +166,8 @@ function renderDoubanCards($content) {
         $type = $matches[2];
         $id = $matches[3];
         $title = $matches[4];
-
         // 你的第三方API，需保证可用
         $apiBase = 'https://api.loliko.cn/';
-
         if ($type === 'movie') {
             $apiUrl = $apiBase . "movies/" . $id;
             $resp = @file_get_contents($apiUrl);
@@ -229,33 +196,26 @@ function clean_content($content) {
     // 1. 移除所有 <img> 和 <br> 标签
     $content = preg_replace('/<img[^>]*>/i', '', $content);
     $content = preg_replace('/<br\s*\/?>/i', '', $content);
-
     // 2. 媒体替换
     $mediaPatterns = [
     // Bilibili
     '/<a\s+href="https?:\/\/www\.bilibili\.com\/video\/((av\d{1,10})|(BV[\w]{10}))\/?".*?<\/a>/i' => 
     '<div class="video-wrapper"><iframe src="//www.bilibili.com/blackboard/html5mobileplayer.html?bvid=$1&as_wide=1" frameborder="0" allowfullscreen></iframe></div>',
-
     // YouTube
     '/<a\s+href="https?:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})".*?<\/a>/i' => 
     '<div class="video-wrapper"><iframe src="https://www.youtube.com/embed/$1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>',
-
     // 网易云音乐
     '/<a\s+href="https?:\/\/music\.163\.com\/.*id=(\d+)".*?<\/a>/i' => 
     '<meting-js auto="https://music.163.com/#/song?id=$1"></meting-js>',
-
     // QQ音乐
     '/<a\s+href="https?:\/\/y\.qq\.com\/.*\/([a-zA-Z0-9]+)(\.html)?".*?<\/a>/i' => 
     '<meting-js auto="https://y.qq.com/n/yqq/song/$1.html"></meting-js>',
-
     // 腾讯视频
     '/<a\s+href="https?:\/\/v\.qq\.com\/.*\/([a-zA-Z0-9]+)\.html".*?<\/a>/i' => 
     '<div class="video-wrapper"><iframe src="//v.qq.com/iframe/player.html?vid=$1" frameborder="0" allowfullscreen></iframe></div>',
-
     // Spotify
     '/<a\s+href="https?:\/\/open\.spotify\.com\/(track|album)\/([a-zA-Z0-9]+)".*?<\/a>/i' => 
     '<div class="spotify-wrapper"><iframe src="https://open.spotify.com/embed/$1/$2" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe></div>',
-
     // 优酷视频
     '/<a\s+href="https?:\/\/v\.youku\.com\/.*\/id_([a-zA-Z0-9=]+)\.html".*?<\/a>/i' => 
     '<div class="video-wrapper"><iframe src="https://player.youku.com/embed/$1" frameborder="0" allowfullscreen></iframe></div>'
@@ -266,9 +226,8 @@ function clean_content($content) {
     return $content;
 }
 
-// 缩略图函数（仅示例，需配合后端实现生成并缓存缩略图）
+// --- 获取缩略图函数 ---
 $theme_dir = basename(dirname(__FILE__));
-
 // 缩略图生成函数
 function get_thumb($imgUrl, $theme_dir) {
     $upload_dir = __DIR__ . '/thumbnails/';
@@ -279,31 +238,24 @@ function get_thumb($imgUrl, $theme_dir) {
     $hash = md5($imgUrl);
     $thumbnail_path = $upload_dir . $hash . '.jpg';
     $thumbnail_url = Helper::options()->themeUrl . '/thumbnails/' . $hash . '.jpg';
-
     // 已经存在直接返回
     if (file_exists($thumbnail_path)) {
         return $thumbnail_url;
     }
-
     // 支持外链图片，下载到本地
     $img_data = @file_get_contents($imgUrl);
     if ($img_data === false) return $imgUrl; // 网络图片无法拉取直接返回原图
-
     $src = @imagecreatefromstring($img_data);
     if (!$src) return $imgUrl;
-
     $width = imagesx($src);
     $height = imagesy($src);
     $min = max(300, min($width, $height));
     $size = $min;
-
     // 居中裁剪
     $src_x = ($width - $size) / 2;
     $src_y = ($height - $size) / 2;
-
     $thumb = imagecreatetruecolor($size, $size);
     imagecopyresampled($thumb, $src, 0, 0, $src_x, $src_y, $size, $size, $size, $size);
-
     // 保存缩略图
     imagejpeg($thumb, $thumbnail_path, 90);
 
