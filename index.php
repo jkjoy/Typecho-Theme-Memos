@@ -88,16 +88,7 @@ $gravatarUrl = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=80&d=mm&r=g
                 </div>
                 <div class="memos__meta">
                     <small class="memos__date">
-                        <?php echo time_ago($this->created); ?> • From「<?php if ($this->is('post') || $this->is('page')): ?>
-    <?php $categories = $this->categories; ?>
-    <?php if ($categories): ?>
-        <?php foreach ($categories as $category): ?>
-            <a href="<?php echo $category['permalink']; ?>">
-                <?php echo $category['name']; ?>
-            </a>
-        <?php endforeach; ?>
-    <?php endif; ?>
-<?php endif; ?>」• <a href="<?php $this->permalink() ?>" target="_blank">阅读全文</a>
+                        <?php echo time_ago($this->created); ?> • From「<?php $this->category(','); ?>」• <a href="<?php $this->permalink() ?>" target="_blank">阅读全文</a>
                     </small>
                 </div>
             </div>
@@ -105,11 +96,12 @@ $gravatarUrl = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=80&d=mm&r=g
     <?php endwhile; ?>
     </ul>
     </div>
+    <?php $nextPage = $this->_currentPage + 1; $totalPages = ceil($this->getTotal() / $this->parameter->pageSize); if ($this->_currentPage < $totalPages): ?>  
     <div class="nav-links">
         <span class="loadmore load-btn button-load">
             <?php $this->pageLink('加载更多', 'next'); ?>
         </span>
     </div>
+    <?php endif; ?>
 </section>
 <?php $this->need('footer.php'); ?>
-

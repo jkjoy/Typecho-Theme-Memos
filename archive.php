@@ -1,5 +1,4 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-<?php $this->need('sticky.php'); ?>
 <?php $this->need('head.php');?>
 <?php $this->need('header.php');?>
 <?php
@@ -31,13 +30,6 @@ if ($user->hasLogin()) {
         return;
     }
 }
-// 查询用户的文章数量
-$postCountRow = $db->fetchRow($db->select('COUNT(*) AS count')
-    ->from('table.contents')
-    ->where('authorId = ?', $userId)
-    ->where('type = ?', 'post')
-    ->where('status = ?', 'publish'));
-$postCount = isset($postCountRow['count']) ? intval($postCountRow['count']) : 0;
 // 生成 Gravatar 头像 URL
 $email = $targetUser->mail;
 $options = Typecho_Widget::widget('Widget_Options');
@@ -101,27 +93,24 @@ $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&
                 </div>
                 <div class="memos__meta">
                     <small class="memos__date">
-                        <?php echo time_ago($this->created); ?> • From「<?php if ($this->is('post') || $this->is('page')): ?>
-    <?php $categories = $this->categories; ?>
-    <?php if ($categories): ?>
-        <?php foreach ($categories as $category): ?>
-            <a href="<?php echo $category['permalink']; ?>">
-                <?php echo $category['name']; ?>
-            </a>
-        <?php endforeach; ?>
-    <?php endif; ?>
-<?php endif; ?>」• <a href="<?php $this->permalink() ?>" target="_blank">阅读全文</a>
+                        <?php echo time_ago($this->created); ?> • From「<?php $this->category(','); ?>」• <a href="<?php $this->permalink() ?>" >阅读全文</a>
                     </small>
+                    <button class="comment-btn" data-cid="<?php echo $this->cid; ?>">评论</button>
                 </div>
             </div>
         </li>
         <?php endwhile; ?>
 	    </ul>
         </div>
+        <?php
+$nextPage = $this->_currentPage + 1;
+$totalPages = ceil($this->getTotal() / $this->parameter->pageSize);
+if ($this->_currentPage < $totalPages): ?>  
         <div class="nav-links">
         <span class="loadmore load-btn button-load">
             <?php $this->pageLink('加载更多', 'next'); ?>
         </span>
         </div>
+        <?php endif; ?>
 	</section>
 <?php $this->need('footer.php'); ?>

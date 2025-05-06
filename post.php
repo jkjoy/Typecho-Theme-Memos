@@ -52,7 +52,7 @@ $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&
         $images = $matches[1];
         $cleanHtml = clean_content($content);
         $cleanHtml = renderDoubanCards($cleanHtml);
-    ?>
+        ?>
         <li class="timeline">
             <div class="memos__content" style="--avatar-url: url(<?php echo htmlspecialchars($gravatarUrl); ?>)">
                 <div class="memos__text">

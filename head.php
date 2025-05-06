@@ -19,7 +19,6 @@
 	<link href="<?php $this->options->themeUrl('assets/css/style.css'); ?>" rel="stylesheet" type="text/css">
 	<link href="<?php $this->options->themeUrl('assets/css/APlayer.min.css'); ?>" rel="stylesheet" type="text/css">
 	<link href="<?php $this->options->themeUrl('assets/css/highlight.github.min.css'); ?>" rel="stylesheet" type="text/css">
-	<link href="<?php $this->options->themeUrl('assets/css/custom.css'); ?>" rel="stylesheet" type="text/css">
     <?php $this->header("generator=&template=&pingback=&wlw=&xmlrpc=&rss1=&atom=&rss2=/feed"); ?>
     <?php $this->options->addhead(); ?>
 </head>
