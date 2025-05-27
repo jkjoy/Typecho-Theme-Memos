@@ -5,7 +5,6 @@
  * @package custom
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-<?php $this->need('head.php'); ?>
 <?php $this->need('header.php'); ?>
 <section id="main" class="container">
 		<h1><?php $this->title() ?></h1>

@@ -1,43 +1,6 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-<?php $this->need('head.php');?>
 <?php $this->need('header.php');?>
-<?php
-$db = Typecho_Db::get();
-$user = Typecho_Widget::widget('Widget_User');
-if ($user->hasLogin()) {
-    $targetUser = $user;
-    $userId = $user->uid;
-} else {
-    try {
-        $adminUser = $db->fetchRow($db->select()
-            ->from('table.users')
-            ->where('group = ?', 'administrator')
-            ->limit(1));
-        if ($adminUser) {
-            // 使用管理员信息创建临时用户对象
-            $targetUser = new stdClass();
-            $targetUser->uid = $adminUser['uid'];
-            $targetUser->mail = $adminUser['mail'];
-            $targetUser->screenName = $adminUser['screenName'];
-            $userId = $adminUser['uid'];
-        } else {
-            // 如果找不到管理员，返回空
-            echo "";
-            return;
-        }
-    } catch (Exception $e) {
-        echo "";
-        return;
-    }
-}
-// 生成 Gravatar 头像 URL
-$email = $targetUser->mail;
-$options = Typecho_Widget::widget('Widget_Options');
-$gravatarPrefix = empty($options->cnavatar) ? 'https://cravatar.cn/avatar/' : $options->cnavatar;
-$gravatarUrl = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=80&d=mm&r=g';
-$gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&r=g';
-?>
     <section id="main" class="container">
 		<h1><?php $this->title() ?></h1>
 		<blockquote>
@@ -71,20 +34,22 @@ $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&
             <?php else: ?>
             <?php endif; ?>
                     </span>
-                    <p><?php echo $cleanHtml; ?></p>
-                    <div class="resource-wrapper">
+                    <p><?php //echo $cleanHtml; 
+                    echo $content; ?></p>
+<!--                    <div class="resource-wrapper">
                         <div class="images-wrapper"><!-- style="display: flex; flex-wrap: wrap; gap: 10px;" -->
-                    <?php if (!empty($images)): ?>
-                <?php foreach ($images as $imgUrl): ?>
-                    <div class="resimg" ><!-- style="flex: 1 1 calc(33.33% - 10px); overflow: hidden; position: relative; height: 200px;" -->
-                    <a target="_blank" rel="noreferrer">
+                    <?php //if (!empty($images)): ?>
+                <?php //foreach ($images as $imgUrl): ?>
+<!--                    <div class="resimg" ><!-- style="flex: 1 1 calc(33.33% - 10px); overflow: hidden; position: relative; height: 200px;" -->
+<!--                    <a target="_blank" rel="noreferrer">
                         <img loading="lazy" src="<?php echo $imgUrl; ?>" alt="文章图片"  />
                     </a>               
                     </div>
-                <?php endforeach; ?>
-                <?php endif; ?>
+                <?php //endforeach; ?>
+                <?php //endif; ?>
                 </div>
                 </div>
+-->
                 </div>
                 <div class="memos__meta">
                 <small class="memos__date">

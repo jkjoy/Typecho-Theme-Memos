@@ -1,42 +1,33 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-<?php $this->need('head.php');?>
-<?php $this->need('header.php');?>
-<?php
+<?php $this->need('header.php');
+
+// 用户与头像信息
 $db = Typecho_Db::get();
 $user = Typecho_Widget::widget('Widget_User');
 if ($user->hasLogin()) {
     $targetUser = $user;
     $userId = $user->uid;
 } else {
-    try {
-        $adminUser = $db->fetchRow($db->select()
-            ->from('table.users')
-            ->where('group = ?', 'administrator')
-            ->limit(1));
-        if ($adminUser) {
-            // 使用管理员信息创建临时用户对象
-            $targetUser = new stdClass();
-            $targetUser->uid = $adminUser['uid'];
-            $targetUser->mail = $adminUser['mail'];
-            $targetUser->screenName = $adminUser['screenName'];
-            $userId = $adminUser['uid'];
-        } else {
-            // 如果找不到管理员，返回空
-            echo "";
-            return;
-        }
-    } catch (Exception $e) {
+    $adminUser = $db->fetchRow($db->select()->from('table.users')->where('group = ?', 'administrator')->limit(1));
+    if ($adminUser) {
+        $targetUser = (object)[
+            'uid' => $adminUser['uid'],
+            'mail' => $adminUser['mail'],
+            'screenName' => $adminUser['screenName']
+        ];
+        $userId = $adminUser['uid'];
+    } else {
         echo "";
         return;
     }
 }
-// 生成 Gravatar 头像 URL
+$postCountRow = $db->fetchRow($db->select('COUNT(*) AS count')->from('table.contents')->where('authorId = ?', $userId)->where('type = ?', 'post')->where('status = ?', 'publish'));
+$postCount = intval($postCountRow['count']);
 $email = $targetUser->mail;
 $options = Typecho_Widget::widget('Widget_Options');
 $gravatarPrefix = empty($options->cnavatar) ? 'https://cravatar.cn/avatar/' : $options->cnavatar;
 $gravatarUrl = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=80&d=mm&r=g';
-$gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&r=g';
 ?>
     <section id="main" class="container">
 		<h1><?php $this->title() ?></h1>

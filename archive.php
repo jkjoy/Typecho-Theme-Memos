@@ -1,41 +1,32 @@
 <?php if (!defined('__TYPECHO_ROOT_DIR__')) exit; ?>
-<?php $this->need('head.php');?>
-<?php $this->need('header.php');?>
-<?php
+<?php $this->need('header.php');
+
+// 用户与头像信息
 $db = Typecho_Db::get();
 $user = Typecho_Widget::widget('Widget_User');
 if ($user->hasLogin()) {
     $targetUser = $user;
     $userId = $user->uid;
 } else {
-    try {
-        $adminUser = $db->fetchRow($db->select()
-            ->from('table.users')
-            ->where('group = ?', 'administrator')
-            ->limit(1));
-        if ($adminUser) {
-            // 使用管理员信息创建临时用户对象
-            $targetUser = new stdClass();
-            $targetUser->uid = $adminUser['uid'];
-            $targetUser->mail = $adminUser['mail'];
-            $targetUser->screenName = $adminUser['screenName'];
-            $userId = $adminUser['uid'];
-        } else {
-            // 如果找不到管理员，返回空
-            echo "";
-            return;
-        }
-    } catch (Exception $e) {
+    $adminUser = $db->fetchRow($db->select()->from('table.users')->where('group = ?', 'administrator')->limit(1));
+    if ($adminUser) {
+        $targetUser = (object)[
+            'uid' => $adminUser['uid'],
+            'mail' => $adminUser['mail'],
+            'screenName' => $adminUser['screenName']
+        ];
+        $userId = $adminUser['uid'];
+    } else {
         echo "";
         return;
     }
 }
-// 生成 Gravatar 头像 URL
+$postCountRow = $db->fetchRow($db->select('COUNT(*) AS count')->from('table.contents')->where('authorId = ?', $userId)->where('type = ?', 'post')->where('status = ?', 'publish'));
+$postCount = intval($postCountRow['count']);
 $email = $targetUser->mail;
 $options = Typecho_Widget::widget('Widget_Options');
 $gravatarPrefix = empty($options->cnavatar) ? 'https://cravatar.cn/avatar/' : $options->cnavatar;
 $gravatarUrl = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=80&d=mm&r=g';
-$gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&r=g';
 ?>
     <section id="main" class="container">
 		<h1>        <?php $this->archiveTitle(array(
@@ -83,7 +74,7 @@ $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&
                         ?>
                             <div class="resimg thumb-wrap">
                                 <a href="<?php echo htmlspecialchars($imgUrl); ?>" class="img-popup" target="_blank">
-                                    <img loading="lazy" src="<?php echo htmlspecialchars($thumb); ?>" alt="文章图片" style="width:300px;height:300px;object-fit:cover;border-radius:5px;"/>
+                                    <img loading="lazy" src="<?php echo htmlspecialchars($thumb); ?>" alt="文章图片" class="thumb"/>
                                 </a>
                             </div>
                         <?php endforeach; ?>
@@ -93,19 +84,16 @@ $gravatarUrl2x = $gravatarPrefix . md5(strtolower(trim($email))) . '?s=160&d=mm&
                 </div>
                 <div class="memos__meta">
                     <small class="memos__date">
-                        <?php echo time_ago($this->created); ?> • From「<?php $this->category(','); ?>」• <a href="<?php $this->permalink() ?>" >阅读全文</a>
-                    </small>
-                    <button class="comment-btn" data-cid="<?php echo $this->cid; ?>">评论</button>
+                        <?php echo time_ago($this->created); ?> • From「<?php $this->category(','); ?>」• 
+                        <!--<a href="<?php //$this->permalink() ?>" >阅读全文</a>-->
+                    </small>                   
                 </div>
             </div>
         </li>
         <?php endwhile; ?>
 	    </ul>
         </div>
-        <?php
-$nextPage = $this->_currentPage + 1;
-$totalPages = ceil($this->getTotal() / $this->parameter->pageSize);
-if ($this->_currentPage < $totalPages): ?>  
+        <?php $nextPage = $this->_currentPage + 1; $totalPages = ceil($this->getTotal() / $this->parameter->pageSize); if ($this->_currentPage < $totalPages): ?>  
         <div class="nav-links">
         <span class="loadmore load-btn button-load">
             <?php $this->pageLink('加载更多', 'next'); ?>
